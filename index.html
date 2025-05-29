@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="/wsdk.js"></script> 
+  
+
+  <title>Workspace SDK Side-by-Side mode</title>
+</head> 
+<body>
+<h1>Workspace Web SDK </h1>
+
+<div>
+	App Key: </br> <input id="APPKEY" type="text" placeholder="App Key for Workspace" size="50"/></br>
+	<input id="PRODUCTID" type="text" placeholder="Product ID for Workspace" size="50"/>
+	<input type="button" onclick="connect()" value="Connect"/>
+</div>
+<br/>
+<div>
+	<p>Request Data:</p>
+
+	<div>
+		<input id="Sym_Fun" type="text" placeholder="RIC Code" value="GOOGL.O" />
+		<input type="button" onclick="fundamental()" id="fundbutton" value="Get Fundamental" disabled />
+	</div>
+
+</div>
+
+
+<div class="container">
+	<hr/>
+	<div id="log"></div>
+</div>
+
+</body>
+  <script>
+  var ld = undefined;
+  
+
+  function log(message){
+	logbox = document.getElementById("log");
+
+	var dispStr = message;
+		if(typeof message !== "string")	{
+			// object, print all the fields of one item
+			dispStr = '<table><tr><th>Field</th><th>Data</th></tr>'
+			for(var p in message)
+				dispStr += '<tr><td>' + p + '</td><td>' + message[p] + '</td></tr>';
+			dispStr += '</table>';
+		}
+
+		console.log(dispStr);
+		logbox.innerHTML += dispStr + "<br/>";
+		// scroll to bottom
+		logbox.scrollTop = logbox.scrollHeight;
+
+  }
+  
+  function fundamental(){
+	sym = document.getElementById("Sym_Fun").value;
+
+	ld.FundamentalAndReference.Definition(universe=sym, fields="TR.PriceClose").getData().then((res)=>
+		{		
+			log("### GET Data ###");			
+			log(res.data.raw.responses[0].data[0]);
+		});
+		
+  }
+	
+  function connect()
+  {
+	log("Connect");
+	appkey = document.getElementById("APPKEY").value;
+	productid = document.getElementById("PRODUCTID").value;
+    WSDKLoader.init({
+         Mode: 'sxs', 
+         SxSSession:{		   
+            ApiKey: appkey,
+            ProductId: productid
+         } 
+    },
+    ['DesktopAgent', {
+        name: 'DataLibrary', 
+        appKey: appkey,
+    }]
+	).then((WSDK) => {
+   		log('Workspace SDK has loaded'); 
+	    log('DesktopAgent plugin has loaded: ' + !!WSDK.DesktopAgent);
+	    log('DataLibrary plugin has loaded: ' + !!WSDK.DataLibrary);
+		var session = WSDK.DataLibrary.Session.getDefault();
+		ld = WSDK.DataLibrary;
+		session.open().then((s)=>{
+			log("### Open ###");
+			fundbtn = appkey = document.getElementById("fundbutton");
+			fundbtn.disabled = false;
+		
+		});
+	});
+  }
+  
+  </script>
+</html>
